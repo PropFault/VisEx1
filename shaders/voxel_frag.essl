@@ -1,0 +1,48 @@
+#ifndef GL_ES
+#version 330 es
+#endif
+
+precision highp sampler3D;
+uniform sampler3D map;
+uniform vec3 boundingBox[2];
+
+out vec4 fragColor;
+varying vec3 vDir;
+varying vec3 vOrigin;
+
+void main(){
+    vec3 dir = normalize(vDir);
+    vec3 inv_dir = 1.0 / dir;
+    float maxRead = 0.0;
+    
+    // slab
+    vec3 t1 = (boundingBox[0] - vOrigin) * inv_dir;
+    vec3 t2 = (boundingBox[1] - vOrigin) * inv_dir;
+
+    vec3 tminv = min(t1, t2);
+    vec3 tmaxv = max(t1, t2);
+
+    float tmin = min(tminv.x, (tminv.y, tminv.z));
+    float tmax = max(tmaxv.x, (tmaxv.y, tmaxv.z));
+
+    if(tmin > tmax){
+        fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    }else{
+        vec3 cursor = vOrigin + tmin * dir;
+
+        vec3 inc = 1.0 / abs ( dir );
+        float delta = min(inc.x, min(inc.y, inc.z));
+        delta /= 4.0;
+
+        for(float c = tmin; c < tmax; c += delta){
+
+            float curRead = texture(map, cursor + tmax).r;
+            if(curRead > maxRead){
+                maxRead = curRead;
+            }
+            cursor += dir * delta;
+        }
+
+        fragColor = vec4(1.0, maxRead, maxRead, 1.0);
+    }
+}

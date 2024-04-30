@@ -1,0 +1,18 @@
+#ifndef GL_ES
+#version 330 es
+#endif
+
+
+uniform vec3 cameraPos;
+varying vec3 vDir;
+varying vec3 vOrigin;
+void main() {
+    vOrigin = vec3(inverse(modelMatrix) * vec4(cameraPos, 1.0)).xyz;
+    vDir = position - vOrigin;
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1);
+}
+
+// vOrigin is the camera position in view-space
+// cameraPosition is provided by THREE.js
+// vDir is the vector from the vertex position to the camera. 
+// -> this is interpolated when passed to the fragment

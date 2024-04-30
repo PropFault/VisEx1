@@ -20,6 +20,7 @@ let container = null;
 let volume = null;
 let fileInput = null;
 let testShader = null;
+let voxelShader = null;
 
 /**
  * Load all data and initialize UI here.
@@ -39,8 +40,6 @@ function init() {
     fileInput = document.getElementById("upload");
     fileInput.addEventListener('change', readFile);
 
-    // dummy shader gets a color as input
-    testShader = new TestShader([255.0, 255.0, 0.0]);
 }
 
 /**
@@ -53,6 +52,7 @@ function readFile(){
 
         let data = new Uint16Array(reader.result);
         volume = new Volume(data);
+        
 
         resetVis();
     };
@@ -65,19 +65,25 @@ function readFile(){
  * Currently renders the bounding box of the volume.
  */
 async function resetVis(){
+
+
+
     // create new empty scene and perspective camera
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, canvasWidth / canvasHeight, 0.1, 1000 );
 
-    // dummy scene: we render a box and attach our color test shader as material
-    const testCube = new THREE.BoxGeometry(volume.width, volume.height, volume.depth);
-    const testMaterial = testShader.material;
-    await testShader.load(); // this function needs to be called explicitly, and only works within an async function!
-    const testMesh = new THREE.Mesh(testCube, testMaterial);
-    scene.add(testMesh);
+    const boxDimen = new THREE.Vector3(volume.width/ volume.max, volume.height/ volume.max, volume.depth/ volume.max) ;
+    let boxDimenHalf = boxDimen.clone().divideScalar(2)
+    const cube = new THREE.BoxGeometry(boxDimen.x, boxDimen.y, boxDimen.z);
+    voxelShader = new VoxelShader(volume, boxDimenHalf.clone().negate(), boxDimenHalf);
+
+    const material = voxelShader.material;
+    await voxelShader.load(); // this function needs to be called explicitly, and only works within an async function!
+    const mesh = new THREE.Mesh(cube, material);
+    scene.add(mesh);
 
     // our camera orbits around an object centered at (0,0,0)
-    orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2*volume.max, renderer.domElement);
+    orbitCamera = new OrbitCamera(camera, new THREE.Vector3(0,0,0), 2*Math.max(boxDimen.x,boxDimen.y, boxDimen.z), renderer.domElement);
 
     // init paint loop
     requestAnimationFrame(paint);
@@ -88,6 +94,7 @@ async function resetVis(){
  */
 function paint(){
     if (volume) {
+        voxelShader.updateCam(camera.position);
         renderer.render(scene, camera);
     }
 }
