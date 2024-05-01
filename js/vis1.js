@@ -40,6 +40,7 @@ function init() {
     fileInput = document.getElementById("upload");
     fileInput.addEventListener('change', readFile);
 
+    initHistogram();
 }
 
 /**
@@ -66,7 +67,7 @@ function readFile(){
  */
 async function resetVis(){
 
-
+    updateHistogram();
 
     // create new empty scene and perspective camera
     scene = new THREE.Scene();
