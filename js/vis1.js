@@ -76,7 +76,8 @@ async function resetVis(){
     const cube = new THREE.BoxGeometry(boxDimen.x, boxDimen.y, boxDimen.z);
     voxelShader = new VoxelShader(volume, 
             new THREE.Vector3(-boxDimen.x / 2.0, -boxDimen.y / 2.0, -boxDimen.z / 2.0), 
-            new THREE.Vector3(boxDimen.x / 2.0, boxDimen.y / 2.0, boxDimen.z / 2.0));
+            new THREE.Vector3(boxDimen.x / 2.0, boxDimen.y / 2.0, boxDimen.z / 2.0),
+            2000);
 
     const material = voxelShader.material;
     await voxelShader.load(); // this function needs to be called explicitly, and only works within an async function!

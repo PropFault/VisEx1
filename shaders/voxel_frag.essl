@@ -5,6 +5,7 @@
 precision highp sampler3D;
 uniform sampler3D map;
 uniform vec3 boundingBox[2];
+uniform float samples;
 
 out vec4 fragColor;
 varying vec3 vDir;
@@ -39,19 +40,23 @@ void main(){
     vec3 cursor = vOrigin + tmin * dir;
 
     // Add some noise to the cursor
-    cursor += dir * rand(vec2(tmax + 0.5, tmin + 0.5)) * 2.0;
+    cursor += dir * rand(vec2(gl_FragCoord.x * 1000.0, gl_FragCoord.y * 2000.0) / sin(gl_FragCoord.z / 10.0)) * 2.0;
 
     float span = (tmax - tmin);
-    float delta = span / 1000.0;
+    float delta = span / 2000.0; // 2000 samples
 
     for(float c = tmin; c < tmax; c += delta){
 
-        float curRead = texture(map, (cursor / sides) + 0.5).r;
-        if(curRead > maxRead){
-            maxRead = curRead;
-        }
-        if(maxRead > 0.98){
-            break;
+        vec3 p =  (cursor / sides) + 0.5;
+        if(p.x >= 0.0 && p.x >= 0.0 && p.z >= 0.0
+            && p.x <= 1.0 && p.y <= 1.0 && p.z <= 1.0){ // if p is within texture
+            float curRead = texture(map, p).r;
+            if(curRead > maxRead){
+                maxRead = curRead;
+            }
+            if(maxRead > 0.98){ // bright enough.
+                break;
+            }
         }
         cursor += dir * delta;
     }
