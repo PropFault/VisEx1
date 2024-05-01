@@ -72,10 +72,11 @@ async function resetVis(){
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera( 75, canvasWidth / canvasHeight, 0.1, 1000 );
 
-    const boxDimen = new THREE.Vector3(volume.width/ volume.max, volume.height/ volume.max, volume.depth/ volume.max) ;
-    let boxDimenHalf = boxDimen.clone().divideScalar(2)
+    const boxDimen = new THREE.Vector3(volume.width, volume.height, volume.depth) ;
     const cube = new THREE.BoxGeometry(boxDimen.x, boxDimen.y, boxDimen.z);
-    voxelShader = new VoxelShader(volume, boxDimenHalf.clone().negate(), boxDimenHalf);
+    voxelShader = new VoxelShader(volume, 
+            new THREE.Vector3(-boxDimen.x / 2.0, -boxDimen.y / 2.0, -boxDimen.z / 2.0), 
+            new THREE.Vector3(boxDimen.x / 2.0, boxDimen.y / 2.0, boxDimen.z / 2.0));
 
     const material = voxelShader.material;
     await voxelShader.load(); // this function needs to be called explicitly, and only works within an async function!
