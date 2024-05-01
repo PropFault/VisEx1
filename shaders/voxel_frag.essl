@@ -43,7 +43,7 @@ void main(){
     cursor += dir * rand(vec2(gl_FragCoord.x * 1000.0, gl_FragCoord.y * 2000.0) / sin(gl_FragCoord.z / 10.0)) * 2.0;
 
     float span = (tmax - tmin);
-    float delta = span / 2000.0; // 2000 samples
+    float delta = span / samples; // 2000 samples
 
     for(float c = tmin; c < tmax; c += delta){
 
