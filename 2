@@ -22,7 +22,6 @@ void main(){
 
     vec3 sides = boundingBox[1] - boundingBox[0];
 
-
     // slab
     vec3 t1 = (boundingBox[0] - vOrigin) * inv_dir;
     vec3 t2 = (boundingBox[1] - vOrigin) * inv_dir;
@@ -40,16 +39,15 @@ void main(){
     vec3 cursor = vOrigin + tmin * dir;
 
     // Add some noise to the cursor
-    float r = rand(vec2(gl_FragCoord.x * 1000.0, gl_FragCoord.y * 2000.0) / sin(gl_FragCoord.z / 10.0));
-    cursor += dir * r;
+    // float r = rand(vec2(gl_FragCoord.x * 1000.0, gl_FragCoord.y * 2000.0) / sin(gl_FragCoord.z / 10.0));
+    // cursor += dir * r;
 
     float span = (tmax - tmin);
     float delta = span / samples; // 2000 samples
 
-
     for(float c = tmin; c < tmax; c += delta){
         vec3 p =  (cursor / sides) + 0.5;
-        if(p.x >= 0.0 && p.y >= 0.0 && p.z >= 0.0
+        if(p.x >= 0.0 && p.x >= 0.0 && p.z >= 0.0
             && p.x <= 1.0 && p.y <= 1.0 && p.z <= 1.0){ // if p is within texture
             float curRead = texture(map, p).r;
             if(curRead > maxRead){
