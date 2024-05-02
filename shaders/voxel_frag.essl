@@ -41,7 +41,6 @@ void main(){
 
     // Add some noise to the cursor
     float r = rand(vec2(gl_FragCoord.x * 1000.0, gl_FragCoord.y * 2000.0) / sin(gl_FragCoord.z / 10.0));
-    dir += dir * r;
     cursor += dir * r;
 
     float span = (tmax - tmin);
