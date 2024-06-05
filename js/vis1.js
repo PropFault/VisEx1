@@ -91,13 +91,18 @@ async function resetVis(){
     // init paint loop
     requestAnimationFrame(paint);
 }
-
+var iso = 0.5;
+document.querySelector("#iso").addEventListener("change", (event) => {
+    iso = event.target.value;
+    paint();
+});
 /**
  * Render the scene and update all necessary shader information.
  */
 function paint(){
     if (volume) {
         voxelShader.updateCam(camera.position);
+        voxelShader.updateIso(iso);
         renderer.render(scene, camera);
     }
 }

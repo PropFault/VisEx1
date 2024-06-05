@@ -6,10 +6,12 @@
 uniform vec3 cameraPos;
 varying vec3 vDir;
 varying vec3 vOrigin;
+varying vec3 vPos;
 void main() {
     vOrigin = vec3(inverse(modelMatrix) * vec4(cameraPos, 1.0)).xyz;
     vDir = position - vOrigin;
     gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1);
+    vPos = vec3(modelMatrix * vec4(position, 1.0));
 }
 
 // vOrigin is the camera position in view-space

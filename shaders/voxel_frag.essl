@@ -6,10 +6,14 @@ precision highp sampler3D;
 uniform sampler3D map;
 uniform vec3 boundingBox[2];
 uniform float samples;
+uniform float iso;
+uniform vec3 cameraPos;
 
 out vec4 fragColor;
 varying vec3 vDir;
 varying vec3 vOrigin;
+varying vec3 vPos;
+
 
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
@@ -18,7 +22,8 @@ float rand(vec2 co){
 void main(){
     vec3 dir = normalize(vDir);
     vec3 inv_dir = 1.0 / dir;
-    float maxRead = 0.0;
+    float lastRead = 0.0;
+    vec3 lastPos = vec3(0.0f,0.0f,0.0f);
 
     vec3 sides = boundingBox[1] - boundingBox[0];
 
@@ -30,8 +35,8 @@ void main(){
     vec3 tminv = min(t1, t2);
     vec3 tmaxv = max(t1, t2);
 
-    float tmin = min(tminv.x, (tminv.y, tminv.z));
-    float tmax = max(tmaxv.x, (tmaxv.y, tmaxv.z));
+    float tmin = max(tminv.x, min(tminv.y, tminv.z));
+    float tmax = min(tmaxv.x, max(tmaxv.y, tmaxv.z));
 
     if(tmin > tmax){
         discard;
@@ -40,28 +45,38 @@ void main(){
     vec3 cursor = vOrigin + tmin * dir;
 
     // Add some noise to the cursor
-    float r = rand(vec2(gl_FragCoord.x * 1000.0, gl_FragCoord.y * 2000.0) / sin(gl_FragCoord.z / 10.0));
-    cursor += dir * r;
 
     float span = (tmax - tmin);
     float delta = span / samples; // 2000 samples
 
-
+    vec3 firstHit = vec3(0.0f,0.0f,0.0f);
+    vec3 gradient = vec3(0.0f, 0.0f, 0.0f);
     for(float c = tmin; c < tmax; c += delta){
         vec3 p =  (cursor / sides) + 0.5;
         if(p.x >= 0.0 && p.y >= 0.0 && p.z >= 0.0
             && p.x <= 1.0 && p.y <= 1.0 && p.z <= 1.0){ // if p is within texture
             float curRead = texture(map, p).r;
-            if(curRead > maxRead){
-                maxRead = curRead;
-            }
-            if(maxRead > 0.98){ // bright enough.
+            
+            if(lastRead < iso && curRead > iso){
+                float eps = 0.0001; // some small value
+                float interp = (iso - lastRead) / (curRead - lastRead);
+                firstHit = lastPos + ((lastPos - p) * interp);
+                gradient = normalize(vec3(
+                    (texture(map, vec3(firstHit.x - eps, firstHit.y, firstHit.z)).r - texture(map, vec3(firstHit.x + eps, firstHit.y, firstHit.z)).r) / 2.0,
+                    (texture(map, vec3(firstHit.x, firstHit.y - eps, firstHit.z)).r - texture(map, vec3(firstHit.x, firstHit.y + eps, firstHit.z)).r) / 2.0,
+                    (texture(map, vec3(firstHit.x, firstHit.y, firstHit.z - eps)).r - texture(map, vec3(firstHit.x, firstHit.y, firstHit.z + eps)).r) / 2.0
+                ));
                 break;
             }
+
+            lastRead = curRead;
         }
+        lastPos = p;
         cursor += dir * delta;
     }
+    vec3 lightDir = normalize(cameraPos - firstHit);
 
-
-    fragColor = vec4(maxRead, maxRead, maxRead, 1.0);
+    vec3 diffuse = vec3(1.0f,1.0f,1.0f) * max(dot(gradient, lightDir), 0.0);
+    vec3 color = diffuse * vec3(1.0f,1.0f,1.0f);
+    fragColor = vec4(diffuse.x, diffuse.y, diffuse.z, 1.0);
 }
