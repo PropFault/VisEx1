@@ -1,16 +1,19 @@
 #ifndef GL_ES
 #version 330 es
 #endif
-
 precision highp sampler3D;
+
+uniform vec3 isoSurfacesData[5];
+uniform vec3 isoSurfacesColor[5];
+
 uniform sampler3D map;
 uniform vec3 boundingBox[2];
 uniform float samples;
 uniform float iso;
 uniform vec3 cameraPos;
-uniform vec3 objectColor;
 uniform vec3 ambientColor;
 uniform vec3 lightColor;
+uniform int usedIsoSurfaces;
 
 out vec4 fragColor;
 varying vec3 vDir;
@@ -18,12 +21,13 @@ varying vec3 vOrigin;
 varying vec3 vPos;
 
 
+
+
 float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
 void main(){
-    float ciso = clamp(iso, 0.01, 0.99);
     vec3 dir = normalize(vDir);
     vec3 inv_dir = 1.0 / dir;
     float lastRead = 0.0;
@@ -46,7 +50,7 @@ void main(){
         discard;
     }
     tmin = max(tmin, 0.0); // ensure bigger than 0
-    vec3 cursor = vOrigin + tmin * dir;
+    
 
     // Add some noise to the cursor
 
@@ -54,53 +58,59 @@ void main(){
     float maxSide = max(sides.z, max(sides.x, sides.y));
     float delta = maxSide / samples; // 2000 samples
 
-    vec3 firstHit = vec3(0.0f,0.0f,0.0f);
-    vec3 gradient = vec3(0.0f, 0.0f, 0.0f);
-    bool hit = false;
-    for(float c = tmin; c < tmax; c += delta){
-        vec3 p =  (cursor / sides) + 0.5;
-        if(p.x >= 0.0 && p.y >= 0.0 && p.z >= 0.0
+    vec3 totalColor = vec3(0.0f, 0.0f, 0.0f);
+    
+    for(int i = 0; i < usedIsoSurfaces; i++){
+        float ciso = clamp(isoSurfacesData[i].x, 0.01, 0.99);
+        bool hit = false;
+        vec3 firstHit = vec3(0.0f,0.0f,0.0f);
+        vec3 gradient = vec3(0.0f, 0.0f, 0.0f);
+        vec3 cursor = vOrigin + tmin * dir;
+    
+        for(float c = tmin; c < tmax; c += delta){
+            vec3 p =  (cursor / sides) + 0.5;
+            if(p.x >= 0.0 && p.y >= 0.0 && p.z >= 0.0
             && p.x <= 1.0 && p.y <= 1.0 && p.z <= 1.0){ // if p is within texture
-            float curRead = texture(map, p).r;
-            if(lastRead < ciso && curRead > ciso){
-                hit = true;
-                float eps = 0.0001; // some small value
-                float interp = (ciso - lastRead) / (curRead - lastRead);
-                firstHit = lastPos + ((lastPos - p) * interp);
-                gradient = normalize(vec3(
-                    (texture(map, vec3(firstHit.x - eps, firstHit.y, firstHit.z)).r - texture(map, vec3(firstHit.x + eps, firstHit.y, firstHit.z)).r) / 2.0,
-                    (texture(map, vec3(firstHit.x, firstHit.y - eps, firstHit.z)).r - texture(map, vec3(firstHit.x, firstHit.y + eps, firstHit.z)).r) / 2.0,
-                    (texture(map, vec3(firstHit.x, firstHit.y, firstHit.z - eps)).r - texture(map, vec3(firstHit.x, firstHit.y, firstHit.z + eps)).r) / 2.0
-                ));
-                break;
+                float curRead = texture(map, p).r;
+                if(lastRead < ciso && curRead > ciso){
+                    hit = true;
+                    float eps = 0.0001; // some small value
+                    float interp = (ciso - lastRead) / (curRead - lastRead);
+                    firstHit = lastPos + ((lastPos - p) * interp);
+                    gradient = normalize(vec3(
+                        (texture(map, vec3(firstHit.x - eps, firstHit.y, firstHit.z)).r - texture(map, vec3(firstHit.x + eps, firstHit.y, firstHit.z)).r) / 2.0,
+                        (texture(map, vec3(firstHit.x, firstHit.y - eps, firstHit.z)).r - texture(map, vec3(firstHit.x, firstHit.y + eps, firstHit.z)).r) / 2.0,
+                        (texture(map, vec3(firstHit.x, firstHit.y, firstHit.z - eps)).r - texture(map, vec3(firstHit.x, firstHit.y, firstHit.z + eps)).r) / 2.0
+                    ));
+                    break;
+                }
+                lastRead = curRead;
             }
-
-            lastRead = curRead;
+            lastPos = p;
+            cursor += dir * delta;
         }
-        lastPos = p;
-        cursor += dir * delta;
+        if(hit){
+            //basic values
+            float specularStrength = ciso;
+            vec3 lightDir = normalize(cameraPos - firstHit);
+            vec3 reflectDir = reflect(-lightDir, gradient);
+
+
+            //diffuse
+            vec3 diffuse = lightColor* max(dot(gradient, lightDir), 0.0);
+            //specular
+            float spec = pow(max(dot(lightDir, reflectDir), 0.0), 32.0);
+            vec3 specular = specularStrength * spec * lightColor;
+
+            // Calculate final color
+            vec3 color = (ambientColor + diffuse + specular) * isoSurfacesColor[i];
+            //clamp color
+            color.x = max(min(color.x, 1.0f), 0.0f);
+            color.y = max(min(color.y, 1.0f), 0.0f);
+            color.z = max(min(color.z, 1.0f), 0.0f);
+            
+            totalColor = totalColor + color * isoSurfacesData[i].y;
+        }
     }
-    if(!hit){
-        discard;
-        return;
-    }
-    //basic values
-    float specularStrength = ciso;
-    vec3 lightDir = normalize(cameraPos - firstHit);
-    vec3 reflectDir = reflect(-lightDir, gradient);
-
-
-    //diffuse
-    vec3 diffuse = lightColor* max(dot(gradient, lightDir), 0.0);
-    //specular
-    float spec = pow(max(dot(lightDir, reflectDir), 0.0), 32.0);
-    vec3 specular = specularStrength * spec * lightColor;
-
-    // Calculate final color
-    vec3 color = (ambientColor + diffuse + specular) * objectColor;
-    //clamp color
-    color.x = max(min(color.x, 1.0f), 0.0f);
-    color.y = max(min(color.y, 1.0f), 0.0f);
-    color.z = max(min(color.z, 1.0f), 0.0f);
-    fragColor = vec4(color.x, color.y, color.z, 1.0);
+    fragColor = vec4(totalColor.x, totalColor.y, totalColor.z, 1.0);
 }

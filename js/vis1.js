@@ -98,10 +98,11 @@ async function resetVis(){
  */
 function paint(){
     if (volume) {
-        let surface = editor.getSurfaces()[0];
+        let surfaces = editor.getSurfaces();
+
         voxelShader.updateCam(camera.position);
-        voxelShader.updateIso(surface.iso);
-        voxelShader.updateObjectColor(new THREE.Vector3(surface.color.r, surface.color.g, surface.color.b));
+        voxelShader.updateIsoSurfaces(surfaces);
+
         renderer.render(scene, camera);
     }
 }
