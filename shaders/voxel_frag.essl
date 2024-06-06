@@ -23,6 +23,7 @@ float rand(vec2 co){
 }
 
 void main(){
+    float ciso = clamp(iso, 0.01, 0.99);
     vec3 dir = normalize(vDir);
     vec3 inv_dir = 1.0 / dir;
     float lastRead = 0.0;
@@ -61,10 +62,10 @@ void main(){
         if(p.x >= 0.0 && p.y >= 0.0 && p.z >= 0.0
             && p.x <= 1.0 && p.y <= 1.0 && p.z <= 1.0){ // if p is within texture
             float curRead = texture(map, p).r;
-            if(lastRead < iso && curRead > iso){
+            if(lastRead < ciso && curRead > ciso){
                 hit = true;
                 float eps = 0.0001; // some small value
-                float interp = (iso - lastRead) / (curRead - lastRead);
+                float interp = (ciso - lastRead) / (curRead - lastRead);
                 firstHit = lastPos + ((lastPos - p) * interp);
                 gradient = normalize(vec3(
                     (texture(map, vec3(firstHit.x - eps, firstHit.y, firstHit.z)).r - texture(map, vec3(firstHit.x + eps, firstHit.y, firstHit.z)).r) / 2.0,
@@ -84,7 +85,7 @@ void main(){
         return;
     }
     //basic values
-    float specularStrength = iso;
+    float specularStrength = ciso;
     vec3 lightDir = normalize(cameraPos - firstHit);
     vec3 reflectDir = reflect(-lightDir, gradient);
 
