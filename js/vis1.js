@@ -78,7 +78,7 @@ async function resetVis(){
     voxelShader = new VoxelShader(volume, 
             new THREE.Vector3(-boxDimen.x / 2.0, -boxDimen.y / 2.0, -boxDimen.z / 2.0), 
             new THREE.Vector3(boxDimen.x / 2.0, boxDimen.y / 2.0, boxDimen.z / 2.0),
-            2000);
+            500);
 
     const material = voxelShader.material;
     await voxelShader.load(); // this function needs to be called explicitly, and only works within an async function!
@@ -92,9 +92,16 @@ async function resetVis(){
     requestAnimationFrame(paint);
 }
 var iso = 0.5;
+var objectColor = new THREE.Vector3(1,1,1);
 document.querySelector("#iso").addEventListener("change", (event) => {
     iso = event.target.value;
     paint();
+});
+document.querySelector("#objectColor").addEventListener("change", (event) => {
+    let color = new THREE.Color(event.target.value);
+    objectColor.x = color.r;
+    objectColor.y = color.g;
+    objectColor.z = color.b;
 });
 /**
  * Render the scene and update all necessary shader information.
@@ -103,6 +110,7 @@ function paint(){
     if (volume) {
         voxelShader.updateCam(camera.position);
         voxelShader.updateIso(iso);
+        voxelShader.updateObjectColor(objectColor);
         renderer.render(scene, camera);
     }
 }

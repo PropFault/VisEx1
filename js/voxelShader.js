@@ -17,11 +17,17 @@ class VoxelShader extends Shader{
         this.setUniform("cameraPos", new THREE.Vector3(0,0,0));
         this.setUniform("samples", samples);
         this.setUniform("iso", 0.5);
+        this.setUniform("objectColor", new THREE.Vector3(1,1,1));
+        this.setUniform("lightColor", new THREE.Vector3(0.75,0.75,0.75));
+        this.setUniform("ambientColor", new THREE.Vector3(0.005, 0.005, 0.005));
     }
     updateCam(cameraPos) {
         this.material.uniforms.cameraPos.value.copy(cameraPos);
     }
     updateIso(iso){
         this.material.uniforms.iso.value = iso
+    }
+    updateObjectColor(color) {
+        this.material.uniforms.objectColor.value.copy(color);
     }
 }

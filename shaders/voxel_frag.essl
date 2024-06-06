@@ -8,6 +8,9 @@ uniform vec3 boundingBox[2];
 uniform float samples;
 uniform float iso;
 uniform vec3 cameraPos;
+uniform vec3 objectColor;
+uniform vec3 ambientColor;
+uniform vec3 lightColor;
 
 out vec4 fragColor;
 varying vec3 vDir;
@@ -47,17 +50,19 @@ void main(){
     // Add some noise to the cursor
 
     float span = (tmax - tmin);
-    float delta = span / samples; // 2000 samples
+    float maxSide = max(sides.z, max(sides.x, sides.y));
+    float delta = maxSide / samples; // 2000 samples
 
     vec3 firstHit = vec3(0.0f,0.0f,0.0f);
     vec3 gradient = vec3(0.0f, 0.0f, 0.0f);
+    bool hit = false;
     for(float c = tmin; c < tmax; c += delta){
         vec3 p =  (cursor / sides) + 0.5;
         if(p.x >= 0.0 && p.y >= 0.0 && p.z >= 0.0
             && p.x <= 1.0 && p.y <= 1.0 && p.z <= 1.0){ // if p is within texture
             float curRead = texture(map, p).r;
-            
             if(lastRead < iso && curRead > iso){
+                hit = true;
                 float eps = 0.0001; // some small value
                 float interp = (iso - lastRead) / (curRead - lastRead);
                 firstHit = lastPos + ((lastPos - p) * interp);
@@ -74,9 +79,27 @@ void main(){
         lastPos = p;
         cursor += dir * delta;
     }
+    if(!hit){
+        discard;
+        return;
+    }
+    //basic values
+    float specularStrength = iso;
     vec3 lightDir = normalize(cameraPos - firstHit);
+    vec3 reflectDir = reflect(-lightDir, gradient);
 
-    vec3 diffuse = vec3(1.0f,1.0f,1.0f) * max(dot(gradient, lightDir), 0.0);
-    vec3 color = diffuse * vec3(1.0f,1.0f,1.0f);
-    fragColor = vec4(diffuse.x, diffuse.y, diffuse.z, 1.0);
+
+    //diffuse
+    vec3 diffuse = lightColor* max(dot(gradient, lightDir), 0.0);
+    //specular
+    float spec = pow(max(dot(lightDir, reflectDir), 0.0), 32.0);
+    vec3 specular = specularStrength * spec * lightColor;
+
+    // Calculate final color
+    vec3 color = (ambientColor + diffuse + specular) * objectColor;
+    //clamp color
+    color.x = max(min(color.x, 1.0f), 0.0f);
+    color.y = max(min(color.y, 1.0f), 0.0f);
+    color.z = max(min(color.z, 1.0f), 0.0f);
+    fragColor = vec4(color.x, color.y, color.z, 1.0);
 }
