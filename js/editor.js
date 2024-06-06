@@ -111,6 +111,13 @@ class Editor {
 
         this.updateEditor();
         this.updateFunction();
+
+        if (this.data.length >= 5) {
+            d3.select("#addSelector").attr("disabled", true);
+        } else {
+            console.log("hi")
+            d3.select("#tfColors").select("li").select("button").attr("disabled", null);
+        }
     }
 
     removeSelector(d) {
@@ -118,6 +125,12 @@ class Editor {
 
         this.updateEditor();
         this.updateFunction();
+
+        if (this.data.length <= 1) {
+            d3.select("#tfColors").select("li").select("button").attr("disabled", true);
+        } else {
+            d3.select("#addSelector").attr("disabled", null);
+        }
     }
 
     updateEditor() {
