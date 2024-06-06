@@ -50,6 +50,8 @@ class Editor {
                     .text("x")
                     .on("click", (_, d) => this.removeSelector(d)));
 
+        d3.select("#tfColors").select("li").select("button").attr("disabled", true);
+
         this.svg.selectAll(".selector")
             .data(this.data)
             .join("g")
