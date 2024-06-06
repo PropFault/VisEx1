@@ -21,6 +21,7 @@ let volume = null;
 let fileInput = null;
 let testShader = null;
 let voxelShader = null;
+let editor = null;
 
 /**
  * Load all data and initialize UI here.
@@ -40,7 +41,8 @@ function init() {
     fileInput = document.getElementById("upload");
     fileInput.addEventListener('change', readFile);
 
-    initHistogram();
+    editor = new Editor(paint);
+    editor.drawEditor();
 }
 
 /**
@@ -67,7 +69,7 @@ function readFile(){
  */
 async function resetVis(){
 
-    updateHistogram();
+    editor.updateHistogram();
 
     // create new empty scene and perspective camera
     scene = new THREE.Scene();
@@ -91,26 +93,15 @@ async function resetVis(){
     // init paint loop
     requestAnimationFrame(paint);
 }
-var iso = 0.5;
-var objectColor = new THREE.Vector3(1,1,1);
-document.querySelector("#iso").addEventListener("change", (event) => {
-    iso = event.target.value;
-    paint();
-});
-document.querySelector("#objectColor").addEventListener("change", (event) => {
-    let color = new THREE.Color(event.target.value);
-    objectColor.x = color.r;
-    objectColor.y = color.g;
-    objectColor.z = color.b;
-});
 /**
  * Render the scene and update all necessary shader information.
  */
 function paint(){
     if (volume) {
+        let surface = editor.getSurfaces()[0];
         voxelShader.updateCam(camera.position);
-        voxelShader.updateIso(iso);
-        voxelShader.updateObjectColor(objectColor);
+        voxelShader.updateIso(surface.iso);
+        voxelShader.updateObjectColor(new THREE.Vector3(surface.color.r, surface.color.g, surface.color.b));
         renderer.render(scene, camera);
     }
 }

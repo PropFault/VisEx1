@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <title>Vis1</title>
     <link rel="stylesheet" type="text/css" href="style.css">
-    <label for="quantity">ISO:</label>
-    <input type="number" id="iso" name="iso" min="0.0" max="1.0"/> 
-    <input type="color" id="objectColor" />
     <!-- include THREE.js -->
     <script src="three.js/build/three.js"></script>
 
@@ -19,12 +16,16 @@
     <script src="js/voxelShader.js"></script>
     <script src="js/volume.js"></script>
     <script src="js/camera.js"></script>
-    <script src="js/histogram.js"></script>
+    <script src="js/editor.js"></script>
     <script src="js/vis1.js"></script>
 </head>
 
 <!-- call init function when page has loaded -->
 <body onload="init()">
+
+<label for="quantity">ISO:</label>
+<input type="number" id="iso" name="iso" min="0.0" max="1.0"/> 
+<input type="color" id="objectColor" />
 
 <h1>Vis1 Exercise</h1>
 <h2>Pritzl Johannes Benedikt & Brunner Benedikt</h2>
@@ -38,7 +39,10 @@
     <div id="viewContainer"></div>
 
     <!-- container for interactive transfer function -->
-    <div id="tfContainer"></div>
+    <div id="tfContainer">
+        <ol id="tfColors"></ol>
+        <button id="addSelector" style="display: block; margin-left: 3em;">add selector</button>
+    </div>
 
 </div>
 
